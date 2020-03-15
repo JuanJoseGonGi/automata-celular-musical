@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/faiface/pixel/pixelgl"
 )
@@ -19,25 +18,34 @@ type Universe struct {
 }
 
 // NewUniverse creates a new universe
-func NewUniverse() *Universe {
-	return &Universe{
-		Automatons: generateInitialAutomatons(),
-		Rules:      generateRules(),
+func NewUniverse(instruments []string) (*Universe, error) {
+	initialAutomatons, err := generateInitialAutomatons(instruments)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Universe{
+		Automatons: initialAutomatons,
+		Rules:      generateRules(),
+	}, nil
 }
 
-func generateInitialAutomatons() []*Automaton {
+func generateInitialAutomatons(instruments []string) ([]*Automaton, error) {
 	automatons := []*Automaton{}
 
-	for i := 0; i < 3; i++ {
-		automatons = append(automatons, NewAutomaton())
+	for index, instrumentName := range instruments {
+		automaton, err := NewAutomaton(instrumentName, index)
+		if err != nil {
+			return nil, err
+		}
+
+		automatons = append(automatons, automaton)
 	}
 
-	return automatons
+	return automatons, nil
 }
 
 func splitRules(permutations [][]int) Rules {
-	rand.Seed(time.Now().UnixNano())
 	rules := Rules{}
 
 	for _, permutation := range permutations {
@@ -49,7 +57,7 @@ func splitRules(permutations [][]int) Rules {
 
 		key := strings.Join(keySlc, "")
 
-		rules[key] = rand.Intn(6)
+		rules[key] = rand.Intn(5)
 	}
 
 	return rules
@@ -64,7 +72,9 @@ func possibleStates() []int {
 	return values
 }
 
-func generatePermutation(permutationCount []int, permutation []int, values []int) []int {
+func generatePermutation(permutationCount []int, values []int) []int {
+	permutation := make([]int, 3)
+
 	// generate permutaton
 	for i, x := range permutationCount {
 		permutation[i] = values[x]
@@ -77,13 +87,11 @@ func generateRules() Rules {
 
 	values := possibleStates()
 
-	permutationCount := make([]int, len(values))
-	permutation := make([]int, len(values))
-
+	permutationCount := make([]int, 3)
 	for {
-		permutation = generatePermutation(permutationCount, permutation, values)
+		permutation := generatePermutation(permutationCount, values)
 		permutations = append(permutations, permutation)
-		// increment permutation number
+
 		for i := 0; ; {
 			permutationCount[i]++
 			if permutationCount[i] < len(values) {
@@ -91,7 +99,7 @@ func generateRules() Rules {
 			}
 			permutationCount[i] = 0
 			i++
-			if i == len(values) {
+			if i == 3 {
 				return splitRules(permutations)
 			}
 		}
@@ -99,16 +107,26 @@ func generateRules() Rules {
 }
 
 // AddAutomaton adds a new Automaton
-func (universe *Universe) AddAutomaton() {
-	automaton := NewAutomaton()
+func (universe *Universe) AddAutomaton(instrumentName string, index int) error {
+	automaton, err := NewAutomaton(instrumentName, index)
+	if err != nil {
+		return err
+	}
 	universe.Automatons = append(universe.Automatons, automaton)
+
+	return nil
 }
 
 // Update updates each automaton
-func (universe *Universe) Update() {
+func (universe *Universe) Update() error {
 	for _, automaton := range universe.Automatons {
-		automaton.Update(universe.Rules)
+		err := automaton.Update(universe.Rules)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // Draw draws each automaton

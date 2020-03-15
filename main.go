@@ -2,11 +2,19 @@ package main
 
 import (
 	"log"
+	"math/rand"
+	"time"
 
+	"github.com/faiface/beep/speaker"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/juanjosegongi/automata-celular-musical/models"
 	"golang.org/x/image/colornames"
+)
+
+const (
+	sampleRate = 44100
+	bufferSize = 4410
 )
 
 func handleErr(err error) {
@@ -15,16 +23,37 @@ func handleErr(err error) {
 
 // Main function for pixelgl
 func run() {
+	rand.Seed(time.Now().UnixNano())
+	err := speaker.Init(sampleRate, bufferSize)
+	if err != nil {
+		handleErr(err)
+	}
+
 	win, err := createWindow()
 	if err != nil {
 		handleErr(err)
 	}
 
-	universe := initializeUniverse()
+	instruments := []string{"piano", "saxophone", "tuba"}
+
+	universe, err := models.NewUniverse(instruments)
+	if err != nil {
+		handleErr(err)
+	}
+
+	win.Clear(colornames.Black)
+	universe.Draw(win)
 
 	for !win.Closed() {
-		draw(win, universe)
-		update(universe)
+		win.Clear(colornames.Black)
+		err = universe.Update()
+		if err != nil {
+			handleErr(err)
+		}
+		universe.Draw(win)
+
+		win.Update()
+		time.Sleep(time.Second / 2)
 	}
 }
 
@@ -40,26 +69,6 @@ func createWindow() (*pixelgl.Window, error) {
 	}
 
 	return win, nil
-}
-
-func initializeUniverse() *models.Universe {
-	universe := models.NewUniverse()
-
-	for automatonCount := 0; automatonCount < 3; automatonCount++ {
-		universe.AddAutomaton()
-	}
-
-	return universe
-}
-
-func draw(win *pixelgl.Window, universe *models.Universe) {
-	win.Clear(colornames.Black)
-	universe.Draw(win)
-	win.Update()
-}
-
-func update(universe *models.Universe) {
-	universe.Update()
 }
 
 func main() {

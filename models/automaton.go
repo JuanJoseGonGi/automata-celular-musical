@@ -8,57 +8,103 @@ import (
 
 // Automaton is a struct to represent an Automaton
 type Automaton struct {
-	Cells []*Cell
-	Step  int
+	Cells      [][]*Cell
+	CellIndex  int
+	Step       int
+	Index      int
+	Instrument Instrument
 }
 
 // NewAutomaton creates a new Automaton
-func NewAutomaton() *Automaton {
-	return &Automaton{
-		Cells: generateCells(),
-		Step:  0,
+func NewAutomaton(instrumentName string, index int) (*Automaton, error) {
+	instrument, err := NewInstrument(instrumentName)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Automaton{
+		Cells:      generateCells(index),
+		CellIndex:  0,
+		Step:       0,
+		Index:      index,
+		Instrument: instrument,
+	}, nil
 }
 
-func generateCells() []*Cell {
-	cells := []*Cell{}
+func generateCells(index int) [][]*Cell {
+	cells := [][]*Cell{}
 
-	for i := 0; i < 5; i++ {
-		for j := 0; j < 13; j++ {
-			cell := NewCell(float64(30+(i*50)), float64(35+(j*50)), rand.Intn(6))
-			cells = append(cells, cell)
+	for i := 0; i < 13; i++ {
+		row := []*Cell{}
+
+		for j := 0; j < 5; j++ {
+			cell := NewCell(float64(index*280+110+(j*50)), float64(35+(i*50)), 0)
+			row = append(row, cell)
 		}
+		cells = append(cells, row)
 	}
 
 	return cells
 }
 
-// Update updates the state of each cell
-func (automaton *Automaton) Update(rules Rules) {
-	for index, cell := range automaton.Cells {
-		cell.PrevState = cell.State
+func (automaton *Automaton) playAndIncreaseCellIndex() error {
+	step := automaton.Step % 13
+	row := automaton.Cells[step]
 
-		prevCellState := "0"
-		if index > 0 {
-			prevCellState = automaton.Cells[index-1].SPrevState()
-		}
-
-		currentCellState := cell.SState()
-
-		nextCellState := "0"
-		if index < len(automaton.Cells)-1 {
-			nextCellState = automaton.Cells[index+1].SState()
-		}
-
-		rule := prevCellState + currentCellState + nextCellState
-
-		cell.State = rules[rule]
+	err := automaton.Instrument.playNote(row[automaton.CellIndex].State)
+	if err != nil {
+		return err
 	}
+
+	automaton.CellIndex++
+	if automaton.CellIndex == 5 {
+		automaton.Step++
+		automaton.CellIndex = 0
+	}
+
+	return nil
+}
+
+// Update updates the state of each cell
+func (automaton *Automaton) Update(rules Rules) error {
+	step := automaton.Step % 13
+	row := automaton.Cells[step]
+
+	if automaton.Step == 0 {
+		row[automaton.CellIndex].State = rand.Intn(5)
+		return automaton.playAndIncreaseCellIndex()
+	}
+
+	var prevRow []*Cell
+	if step == 0 {
+		prevRow = automaton.Cells[len(automaton.Cells)-1]
+	} else {
+		prevRow = automaton.Cells[step-1]
+	}
+
+	prevCellState := "0"
+	if automaton.CellIndex > 0 {
+		prevCellState = prevRow[automaton.CellIndex-1].SState()
+	}
+
+	currentCellState := prevRow[automaton.CellIndex].SState()
+
+	nextCellState := "0"
+	if automaton.CellIndex < len(prevRow)-1 {
+		nextCellState = prevRow[automaton.CellIndex+1].SState()
+	}
+
+	rule := prevCellState + currentCellState + nextCellState
+	row[automaton.CellIndex].State = rules[rule]
+
+	return automaton.playAndIncreaseCellIndex()
 }
 
 // Draw draws each cell
 func (automaton *Automaton) Draw(win *pixelgl.Window) {
-	for _, cell := range automaton.Cells {
-		cell.Draw(win)
+	for _, row := range automaton.Cells {
+		for _, cell := range row {
+			cell.Draw(win, row)
+		}
 	}
 }

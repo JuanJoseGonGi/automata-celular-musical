@@ -21,24 +21,16 @@ type Cell struct {
 	Size      float64
 	State     int
 	PrevState int
-	Color     color.Color
 }
 
 // NewCell creates a new cell
 func NewCell(posX float64, posY float64, state int) *Cell {
 	return &Cell{
-		PosX:      posX,
-		PosY:      posY,
-		Size:      cellSize,
-		State:     state,
-		PrevState: 0,
-		Color:     colornames.White,
+		PosX:  posX,
+		PosY:  posY,
+		Size:  cellSize,
+		State: state,
 	}
-}
-
-// SPrevState returns the previous state as string
-func (cell *Cell) SPrevState() string {
-	return strconv.Itoa(cell.PrevState)
 }
 
 // SState returns the current state as string
@@ -47,7 +39,7 @@ func (cell *Cell) SState() string {
 }
 
 // Draw draws the cell on win
-func (cell *Cell) Draw(win *pixelgl.Window) {
+func (cell *Cell) Draw(win *pixelgl.Window, row []*Cell) {
 	imd := imdraw.New(nil)
 
 	imd.SetColorMask(cell.getColorFromState())
