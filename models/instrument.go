@@ -31,8 +31,8 @@ type Instrument struct {
 }
 
 // NewInstrument creates a new instrument
-func NewInstrument(name string) (Instrument, error) {
-	notes, err := loadNotes(name)
+func NewInstrument(name string, speed float64) (Instrument, error) {
+	notes, err := loadNotes(name, speed)
 	if err != nil {
 		return Instrument{}, err
 	}
@@ -43,7 +43,7 @@ func NewInstrument(name string) (Instrument, error) {
 	}, nil
 }
 
-func loadNotes(instrumentName string) ([]*Note, error) {
+func loadNotes(instrumentName string, speed float64) ([]*Note, error) {
 	notes := []*Note{nil}
 
 	for i := 1; i < 5; i++ {
@@ -58,9 +58,10 @@ func loadNotes(instrumentName string) ([]*Note, error) {
 		}
 
 		resampledStreamer := beep.Resample(4, format.SampleRate, sampleRate, streamer)
+		ratioStreamer := beep.ResampleRatio(4, speed, resampledStreamer)
 
 		buffer := beep.NewBuffer(format)
-		buffer.Append(resampledStreamer)
+		buffer.Append(ratioStreamer)
 		err = streamer.Close()
 		if err != nil {
 			return nil, err

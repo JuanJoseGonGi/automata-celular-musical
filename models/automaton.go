@@ -16,8 +16,8 @@ type Automaton struct {
 }
 
 // NewAutomaton creates a new Automaton
-func NewAutomaton(instrumentName string, index int) (*Automaton, error) {
-	instrument, err := NewInstrument(instrumentName)
+func NewAutomaton(instrumentName string, index int, speed float64) (*Automaton, error) {
+	instrument, err := NewInstrument(instrumentName, speed)
 	if err != nil {
 		return nil, err
 	}

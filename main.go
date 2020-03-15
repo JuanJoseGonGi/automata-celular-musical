@@ -12,6 +12,10 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+var (
+	speed float64 = 3
+)
+
 const (
 	sampleRate = 44100
 	bufferSize = 4410
@@ -34,9 +38,9 @@ func run() {
 		handleErr(err)
 	}
 
-	instruments := []string{"piano", "saxophone", "tuba"}
+	instruments := []string{"flute", "tuba", "drums"}
 
-	universe, err := models.NewUniverse(instruments)
+	universe, err := models.NewUniverse(instruments, speed)
 	if err != nil {
 		handleErr(err)
 	}
@@ -53,7 +57,7 @@ func run() {
 		universe.Draw(win)
 
 		win.Update()
-		time.Sleep(time.Second / 2)
+		time.Sleep(time.Second / time.Duration(2*speed))
 	}
 }
 

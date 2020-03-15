@@ -18,8 +18,8 @@ type Universe struct {
 }
 
 // NewUniverse creates a new universe
-func NewUniverse(instruments []string) (*Universe, error) {
-	initialAutomatons, err := generateInitialAutomatons(instruments)
+func NewUniverse(instruments []string, speed float64) (*Universe, error) {
+	initialAutomatons, err := generateInitialAutomatons(instruments, speed)
 	if err != nil {
 		return nil, err
 	}
@@ -30,11 +30,11 @@ func NewUniverse(instruments []string) (*Universe, error) {
 	}, nil
 }
 
-func generateInitialAutomatons(instruments []string) ([]*Automaton, error) {
+func generateInitialAutomatons(instruments []string, speed float64) ([]*Automaton, error) {
 	automatons := []*Automaton{}
 
 	for index, instrumentName := range instruments {
-		automaton, err := NewAutomaton(instrumentName, index)
+		automaton, err := NewAutomaton(instrumentName, index, speed)
 		if err != nil {
 			return nil, err
 		}
@@ -107,8 +107,8 @@ func generateRules() Rules {
 }
 
 // AddAutomaton adds a new Automaton
-func (universe *Universe) AddAutomaton(instrumentName string, index int) error {
-	automaton, err := NewAutomaton(instrumentName, index)
+func (universe *Universe) AddAutomaton(instrumentName string, index int, speed float64) error {
+	automaton, err := NewAutomaton(instrumentName, index, speed)
 	if err != nil {
 		return err
 	}
