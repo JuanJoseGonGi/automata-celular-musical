@@ -16,8 +16,8 @@ type Automaton struct {
 }
 
 // NewAutomaton creates a new Automaton
-func NewAutomaton(instrumentName string, index int, speed float64) (*Automaton, error) {
-	instrument, err := NewInstrument(instrumentName, speed)
+func NewAutomaton(instrumentName string, index int, config Config) (*Automaton, error) {
+	instrument, err := NewInstrument(instrumentName, config)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +66,12 @@ func (automaton *Automaton) playAndIncreaseCellIndex() error {
 }
 
 // Update updates the state of each cell
-func (automaton *Automaton) Update(rules Rules) error {
+func (automaton *Automaton) Update(rules Rules, notesAmount int) error {
 	step := automaton.Step % 13
 	row := automaton.Cells[step]
 
 	if automaton.Step == 0 {
-		row[automaton.CellIndex].State = rand.Intn(5)
+		row[automaton.CellIndex].State = rand.Intn(notesAmount)
 		return automaton.playAndIncreaseCellIndex()
 	}
 

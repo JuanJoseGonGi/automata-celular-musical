@@ -18,23 +18,23 @@ type Universe struct {
 }
 
 // NewUniverse creates a new universe
-func NewUniverse(instruments []string, speed float64) (*Universe, error) {
-	initialAutomatons, err := generateInitialAutomatons(instruments, speed)
+func NewUniverse(config Config) (*Universe, error) {
+	initialAutomatons, err := generateInitialAutomatons(config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Universe{
 		Automatons: initialAutomatons,
-		Rules:      generateRules(),
+		Rules:      generateRules(config.NotesAmount),
 	}, nil
 }
 
-func generateInitialAutomatons(instruments []string, speed float64) ([]*Automaton, error) {
+func generateInitialAutomatons(config Config) ([]*Automaton, error) {
 	automatons := []*Automaton{}
 
-	for index, instrumentName := range instruments {
-		automaton, err := NewAutomaton(instrumentName, index, speed)
+	for index, instrumentName := range config.Instruments {
+		automaton, err := NewAutomaton(instrumentName, index, config)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +45,7 @@ func generateInitialAutomatons(instruments []string, speed float64) ([]*Automato
 	return automatons, nil
 }
 
-func splitRules(permutations [][]int) Rules {
+func splitRules(permutations [][]int, notesAmount int) Rules {
 	rules := Rules{}
 
 	for _, permutation := range permutations {
@@ -57,15 +57,15 @@ func splitRules(permutations [][]int) Rules {
 
 		key := strings.Join(keySlc, "")
 
-		rules[key] = rand.Intn(5)
+		rules[key] = rand.Intn(notesAmount)
 	}
 
 	return rules
 }
 
-func possibleStates() []int {
+func possibleStates(notesAmount int) []int {
 	values := []int{}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < notesAmount; i++ {
 		values = append(values, i)
 	}
 
@@ -82,10 +82,10 @@ func generatePermutation(permutationCount []int, values []int) []int {
 	return permutation
 }
 
-func generateRules() Rules {
+func generateRules(notesAmount int) Rules {
 	permutations := [][]int{}
 
-	values := possibleStates()
+	values := possibleStates(notesAmount)
 
 	permutationCount := make([]int, 3)
 	for {
@@ -100,15 +100,15 @@ func generateRules() Rules {
 			permutationCount[i] = 0
 			i++
 			if i == 3 {
-				return splitRules(permutations)
+				return splitRules(permutations, notesAmount)
 			}
 		}
 	}
 }
 
 // AddAutomaton adds a new Automaton
-func (universe *Universe) AddAutomaton(instrumentName string, index int, speed float64) error {
-	automaton, err := NewAutomaton(instrumentName, index, speed)
+func (universe *Universe) AddAutomaton(instrumentName string, index int, config Config) error {
+	automaton, err := NewAutomaton(instrumentName, index, config)
 	if err != nil {
 		return err
 	}
@@ -118,9 +118,9 @@ func (universe *Universe) AddAutomaton(instrumentName string, index int, speed f
 }
 
 // Update updates each automaton
-func (universe *Universe) Update() error {
+func (universe *Universe) Update(notesAmount int) error {
 	for _, automaton := range universe.Automatons {
-		err := automaton.Update(universe.Rules)
+		err := automaton.Update(universe.Rules, notesAmount)
 		if err != nil {
 			return err
 		}

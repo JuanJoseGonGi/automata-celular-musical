@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"time"
@@ -13,7 +15,11 @@ import (
 )
 
 var (
-	speed float64 = 3
+	config models.Config = models.Config{
+		Speed:       1,
+		Instruments: []string{},
+		NotesAmount: 5,
+	}
 )
 
 const (
@@ -23,6 +29,27 @@ const (
 
 func handleErr(err error) {
 	log.Fatal(err)
+}
+
+func loadFile() error {
+	file, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(file, &config)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func init() {
+	err := loadFile()
+	if err != nil {
+		handleErr(err)
+	}
 }
 
 // Main function for pixelgl
@@ -38,9 +65,7 @@ func run() {
 		handleErr(err)
 	}
 
-	instruments := []string{"flute", "tuba", "drums"}
-
-	universe, err := models.NewUniverse(instruments, speed)
+	universe, err := models.NewUniverse(config)
 	if err != nil {
 		handleErr(err)
 	}
@@ -50,14 +75,14 @@ func run() {
 
 	for !win.Closed() {
 		win.Clear(colornames.Black)
-		err = universe.Update()
+		err = universe.Update(config.NotesAmount)
 		if err != nil {
 			handleErr(err)
 		}
 		universe.Draw(win)
 
 		win.Update()
-		time.Sleep(time.Second / time.Duration(2*speed))
+		time.Sleep(time.Second / time.Duration(2*config.Speed))
 	}
 }
 

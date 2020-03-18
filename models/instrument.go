@@ -31,8 +31,8 @@ type Instrument struct {
 }
 
 // NewInstrument creates a new instrument
-func NewInstrument(name string, speed float64) (Instrument, error) {
-	notes, err := loadNotes(name, speed)
+func NewInstrument(name string, config Config) (Instrument, error) {
+	notes, err := loadNotes(name, config)
 	if err != nil {
 		return Instrument{}, err
 	}
@@ -43,10 +43,10 @@ func NewInstrument(name string, speed float64) (Instrument, error) {
 	}, nil
 }
 
-func loadNotes(instrumentName string, speed float64) ([]*Note, error) {
+func loadNotes(instrumentName string, config Config) ([]*Note, error) {
 	notes := []*Note{nil}
 
-	for i := 1; i < 5; i++ {
+	for i := 1; i < config.NotesAmount; i++ {
 		file, err := os.Open(fmt.Sprintf("sounds/%s/%d.wav", instrumentName, i))
 		if err != nil {
 			return nil, err
@@ -58,7 +58,7 @@ func loadNotes(instrumentName string, speed float64) ([]*Note, error) {
 		}
 
 		resampledStreamer := beep.Resample(4, format.SampleRate, sampleRate, streamer)
-		ratioStreamer := beep.ResampleRatio(4, speed, resampledStreamer)
+		ratioStreamer := beep.ResampleRatio(4, config.Speed, resampledStreamer)
 
 		buffer := beep.NewBuffer(format)
 		buffer.Append(ratioStreamer)
