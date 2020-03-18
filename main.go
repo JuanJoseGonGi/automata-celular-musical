@@ -42,6 +42,10 @@ func loadFile() error {
 		return err
 	}
 
+	if config.NotesAmount > 5 || config.NotesAmount < 2 {
+		config.NotesAmount = 5
+	}
+
 	return nil
 }
 
